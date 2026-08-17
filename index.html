@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en" data-board-theme="walnut">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chess 960 Pro - Fischer Random Chess Suite</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js" defer></script>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <span style="font-size: 1.8rem;">♟️</span>
+            <div>
+                <h1>Chess 960 Pro Suite</h1>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Fischer Random Chess • Realistic Materials & Clock Controls</div>
+            </div>
+        </div>
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="play-view">🎮 Play Chess960</button>
+            <button class="tab-btn" data-tab="test-view">🧪 Test Engine Dashboard</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- PLAY & SIMULATE VIEW -->
+        <section id="play-view" class="tab-content active">
+            <div class="chessboard-section">
+                
+                <!-- Black Player Bar & Clock -->
+                <div class="player-clock-box" id="black-clock-box">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <span class="player-badge-icon" id="black-avatar">🤖</span>
+                        <div>
+                            <strong id="black-player-name">Engine Bot (Medium)</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);" id="black-captured"></div>
+                        </div>
+                    </div>
+                    <div class="clock-timer" id="black-clock">03:00</div>
+                </div>
+
+                <!-- Board & Live Evaluation Bar Stage -->
+                <div class="board-stage-wrapper">
+                    
+                    <!-- Dynamic Eval Bar -->
+                    <div class="eval-bar-container" id="eval-bar-container" title="Position Evaluation">
+                        <div class="eval-bar-black" id="eval-bar-black" style="height: 50%;"></div>
+                        <div class="eval-bar-white" id="eval-bar-white"></div>
+                        <div class="eval-score-label" id="eval-score-label">0.0</div>
+                    </div>
+
+                    <!-- Interactive Chessboard Grid with Realistic Materials -->
+                    <div class="board-container" id="board-container"></div>
+                </div>
+
+                <!-- White Player Bar & Clock -->
+                <div class="player-clock-box active-turn" id="white-clock-box">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <span class="player-badge-icon" id="white-avatar">👤</span>
+                        <div>
+                            <strong id="white-player-name">You (White)</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);" id="white-captured"></div>
+                        </div>
+                    </div>
+                    <div class="clock-timer" id="white-clock">03:00</div>
+                </div>
+
+                <!-- Post-Game Analysis Navigation Bar -->
+                <div class="analysis-nav-bar" id="analysis-nav-bar" style="display: none;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-gold); display: flex; align-items: center; gap: 6px;">
+                        <span>🔍 Analysis Mode:</span>
+                        <span id="analysis-move-eval" style="color:#fff; font-weight:600;">Move 0/0</span>
+                    </div>
+                    <div class="analysis-buttons">
+                        <button class="btn btn-secondary nav-step-btn" id="nav-first-btn" title="First Move">⏮</button>
+                        <button class="btn btn-secondary nav-step-btn" id="nav-prev-btn" title="Previous Move">◀</button>
+                        <button class="btn btn-secondary nav-step-btn" id="nav-next-btn" title="Next Move">▶</button>
+                        <button class="btn btn-secondary nav-step-btn" id="nav-last-btn" title="Live/Last Move">⏭</button>
+                    </div>
+                    <button class="btn btn-accent" id="exit-analysis-btn" style="padding: 4px 10px; font-size: 0.8rem;">Exit Analysis</button>
+                </div>
+
+            </div>
+
+            <!-- Sidebar Controls & Settings -->
+            <div class="sidebar-controls">
+                
+                <!-- 960 Position Status Card -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 id="sp-title">SP-497: BRQBNKNR</h3>
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold);" id="sp-badge">Fischer 960</span>
+                    </div>
+
+                    <!-- Visual Piece Layout Preview -->
+                    <div class="sp-mini-layout" id="sp-mini-layout"></div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <button class="btn btn-accent" id="roll-random-960-btn" title="Roll a randomized Fischer 960 layout">🎲 Roll 960</button>
+                        <button class="btn btn-primary" id="open-sp-btn">⚙️ SP Explorer</button>
+                    </div>
+
+                    <!-- Quick Curated Position Picker -->
+                    <div>
+                        <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Top Curated 960 Layouts:</label>
+                        <select id="quick-curated-select" class="btn btn-secondary" style="width: 100%; text-align: left; font-size: 0.85rem;">
+                            <option value="497">#497 - Dynamic Symmetrical (BRQBNKNR)</option>
+                            <option value="282">#282 - Double Wing Bishops (NRKNBBRQ)</option>
+                            <option value="0">#0 - Ultra-Hypermodern (BBQNNRKR)</option>
+                            <option value="959">#959 - Inverted Fortress (RKRNNQBB)</option>
+                            <option value="746">#746 - Corner Queen Ambush (QNRKRBBN)</option>
+                            <option value="169">#169 - Central Monarch (NBNQKRBR)</option>
+                            <option value="400">#400 - Fianchetto Master (BBNNRKQR)</option>
+                            <option value="821">#821 - Wing Knight Outpost (RNNQBKBR)</option>
+                            <option value="540">#540 - Open Center Aggression (RNQKNBRB)</option>
+                            <option value="518">#518 - Classical Heritage (RNBQKBNR)</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary" id="flip-board-btn" style="flex: 1;">🔄 Flip Board</button>
+                        <button class="btn btn-primary" id="new-game-btn" style="flex: 1;">▶️ New Game</button>
+                    </div>
+                </div>
+
+                <!-- Clock & Time Controls Card (Standard Chess.com / Lichess) -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Time Control</h3>
+                        <button class="btn btn-secondary" id="open-time-modal-btn" style="padding: 2px 8px; font-size: 0.78rem;">⏱️ Change Time</button>
+                    </div>
+                    <div id="current-time-display" style="font-weight: 700; color: var(--accent-gold); font-size: 0.95rem;">
+                        ⚡ 3 min | Blitz (+0s inc)
+                    </div>
+                </div>
+
+                <!-- Board Theme & Materials Card -->
+                <div class="glass-card">
+                    <h3>Board Material & Theme</h3>
+                    <select id="theme-select" class="btn btn-secondary" style="width: 100%; text-align: left; font-size: 0.85rem;">
+                        <option value="walnut" selected>🪵 Tournament Walnut & Maple (Natural Wood)</option>
+                        <option value="green">🌿 Classic Tournament Green (Lichess / FIDE)</option>
+                        <option value="blue">🌊 Ocean Blue & Ice (Chess.com Modern)</option>
+                        <option value="marble">🏛️ Obsidian & Polished Marble</option>
+                    </select>
+                </div>
+
+                <!-- Game Mode & Difficulty Card -->
+                <div class="glass-card">
+                    <h3>Game Mode & Connectivity</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                        <label style="font-size: 0.8rem; color: var(--text-muted);">Mode:</label>
+                        <select id="mode-select" class="btn btn-secondary" style="width: 100%; text-align: left;">
+                            <option value="bot">Offline 1: vs Game Engine Bot</option>
+                            <option value="p2p">Offline 2: vs P2P Bluetooth / WiFi</option>
+                            <option value="online">Online 1: vs Google Auth Player</option>
+                        </select>
+
+                        <!-- Bot Level Selector -->
+                        <div id="bot-level-container" style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Bot Difficulty:</label>
+                            <select id="bot-difficulty-select" class="btn btn-secondary" style="width: 100%; text-align: left; font-size: 0.85rem;">
+                                <option value="easy">Level 1: Casual (Fast)</option>
+                                <option value="medium" selected>Level 2: Club Player (Depth 2)</option>
+                                <option value="hard">Level 3: Master (Depth 3)</option>
+                                <option value="master">Level 4: Grandmaster (Depth 4)</option>
+                            </select>
+                        </div>
+
+                        <div id="p2p-status-box" style="font-size: 0.85rem; color: var(--accent-blue); display: none;">
+                            P2P Status: <span id="p2p-status">Disconnected</span>
+                        </div>
+
+                        <div id="online-profile-box" style="font-size: 0.85rem; display: none;">
+                            User: <span id="user-profile">Not Signed In</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Move History Log Card -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Move History (SAN)</h3>
+                        <button class="btn btn-secondary" id="btn-copy-pgn" style="padding: 2px 8px; font-size: 0.75rem;">📋 Copy PGN</button>
+                    </div>
+                    <div class="move-history-box" id="move-log"></div>
+                </div>
+
+                <!-- Status & Network Logs -->
+                <div class="glass-card">
+                    <h3>Game Status & Activity</h3>
+                    <div class="move-history-box" id="status-log" style="height: 90px; font-family: monospace; font-size: 0.8rem;"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TEST ENGINE DASHBOARD VIEW -->
+        <section id="test-view" class="tab-content">
+            <div class="glass-card">
+                <h2>Chess 960 Test Engine Simulator</h2>
+                <p style="color: var(--text-muted);">
+                    Executes automated rule verification across all 960 starting positions, castling matrix, UI component binding, P2P/Online connectivity protocols, and high-speed fuzz stress tests.
+                </p>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button class="btn btn-primary" id="run-all-tests-btn">🚀 Run All Test Suites</button>
+                    <button class="btn btn-accent" id="run-fuzz-btn">⚡ Run 1,000+ Fuzz Stress Test</button>
+                </div>
+
+                <div class="progress-bar-container" style="margin-top: 1rem;">
+                    <div class="progress-bar" id="test-progress-bar"></div>
+                </div>
+
+                <div id="test-status-summary" style="margin-top: 1rem;"></div>
+            </div>
+
+            <div id="test-results-list"></div>
+        </section>
+    </main>
+
+    <!-- SP Explorer Modal -->
+    <div class="modal-overlay" id="sp-modal"></div>
+
+    <!-- TIME CONTROL SELECTION MODAL (Standard Chess.com / Lichess) -->
+    <div class="modal-overlay" id="time-modal">
+        <div class="modal-content glass-card" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3>Select Time Control (Chess.com / Lichess)</h3>
+                <button class="btn-close" id="close-time-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.8rem;">
+                
+                <div>
+                    <h4 style="font-size: 0.82rem; color: var(--accent-gold); text-transform: uppercase;">⚡ Bullet</h4>
+                    <div class="time-presets-grid">
+                        <div class="time-preset-btn" data-preset="1+0">
+                            <div class="preset-category">Bullet</div>
+                            <div class="preset-time">1 min</div>
+                            <div class="preset-inc">+0s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="1+1">
+                            <div class="preset-category">Bullet</div>
+                            <div class="preset-time">1 | 1</div>
+                            <div class="preset-inc">+1s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="2+1">
+                            <div class="preset-category">Bullet</div>
+                            <div class="preset-time">2 | 1</div>
+                            <div class="preset-inc">+1s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="font-size: 0.82rem; color: var(--accent-gold); text-transform: uppercase;">🔥 Blitz</h4>
+                    <div class="time-presets-grid">
+                        <div class="time-preset-btn active" data-preset="3+0">
+                            <div class="preset-category">Blitz</div>
+                            <div class="preset-time">3 min</div>
+                            <div class="preset-inc">+0s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="3+2">
+                            <div class="preset-category">Blitz</div>
+                            <div class="preset-time">3 | 2</div>
+                            <div class="preset-inc">+2s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="5+0">
+                            <div class="preset-category">Blitz</div>
+                            <div class="preset-time">5 min</div>
+                            <div class="preset-inc">+0s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="5+3">
+                            <div class="preset-category">Blitz</div>
+                            <div class="preset-time">5 | 3</div>
+                            <div class="preset-inc">+3s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="5+5">
+                            <div class="preset-category">Blitz</div>
+                            <div class="preset-time">5 | 5</div>
+                            <div class="preset-inc">+5s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="font-size: 0.82rem; color: var(--accent-gold); text-transform: uppercase;">⏱️ Rapid & Classical</h4>
+                    <div class="time-presets-grid">
+                        <div class="time-preset-btn" data-preset="10+0">
+                            <div class="preset-category">Rapid</div>
+                            <div class="preset-time">10 min</div>
+                            <div class="preset-inc">+0s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="15+10">
+                            <div class="preset-category">Rapid</div>
+                            <div class="preset-time">15 | 10</div>
+                            <div class="preset-inc">+10s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="30+0">
+                            <div class="preset-category">Rapid</div>
+                            <div class="preset-time">30 min</div>
+                            <div class="preset-inc">+0s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="60+30">
+                            <div class="preset-category">Classical</div>
+                            <div class="preset-time">60 | 30</div>
+                            <div class="preset-inc">+30s</div>
+                        </div>
+                        <div class="time-preset-btn" data-preset="unlimited">
+                            <div class="preset-category">Casual</div>
+                            <div class="preset-time">∞</div>
+                            <div class="preset-inc">No Clock</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Time Control Section -->
+                <div style="background: rgba(0,0,0,0.3); padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                    <h4 style="font-size: 0.82rem; margin-bottom: 0.5rem; color: var(--text-muted);">Custom Time Control</h4>
+                    <div style="display: flex; gap: 0.6rem; align-items: center;">
+                        <input type="number" id="custom-min-input" min="1" max="180" value="7" style="width: 70px; padding: 0.4rem; background: #0f172a; border: 1px solid var(--border-color); color:#fff; border-radius: 4px; text-align: center;">
+                        <span>min +</span>
+                        <input type="number" id="custom-inc-input" min="0" max="60" value="4" style="width: 70px; padding: 0.4rem; background: #0f172a; border: 1px solid var(--border-color); color:#fff; border-radius: 4px; text-align: center;">
+                        <span>sec increment</span>
+                        <button class="btn btn-secondary" id="apply-custom-time-btn" style="margin-left: auto;">Apply Custom</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER / VICTORY MODAL -->
+    <div class="modal-overlay" id="game-over-modal">
+        <div class="modal-content glass-card" style="max-width: 460px; text-align: center; padding: 2rem;">
+            <div id="game-over-icon" style="font-size: 3.5rem; margin-bottom: 0.5rem;">🏆</div>
+            <h2 id="game-over-title" style="font-size: 1.6rem; color: #fff; margin-bottom: 0.4rem;">White Won!</h2>
+            <p id="game-over-desc" style="color: var(--accent-gold); font-weight: 700; font-size: 1.05rem; margin-bottom: 1.2rem;">By Checkmate</p>
+            
+            <div class="match-stats-summary" id="match-stats-summary" style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; justify-content: space-around; font-size: 0.9rem;">
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Total Moves</div>
+                    <strong id="stat-moves">0</strong>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Position</div>
+                    <strong id="stat-sp">SP-497</strong>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Duration</div>
+                    <strong id="stat-time">00:00</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                <button class="btn btn-primary" id="btn-start-analysis" style="width: 100%; font-size: 1rem;">🔍 Analyze Game</button>
+                <button class="btn btn-accent" id="btn-rematch" style="width: 100%;">🎲 Rematch (New 960 Position)</button>
+                <button class="btn btn-secondary" id="btn-close-game-over">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Bundler / Modules -->
+    <script type="module">
+        import { GameController, STANDARD_TIME_PRESETS } from './js/ui/game_controller.js';
+        import { SPExplorerUI } from './js/ui/sp_explorer_ui.js';
+        import { TestRunnerUI } from './js/testing/test_runner_ui.js';
+        import { ScharnaglGenerator } from './js/engine/chess960.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = {
+                boardContainer: document.getElementById('board-container'),
+                whiteClock: document.getElementById('white-clock'),
+                blackClock: document.getElementById('black-clock'),
+                whiteClockBox: document.getElementById('white-clock-box'),
+                blackClockBox: document.getElementById('black-clock-box'),
+                whiteCaptured: document.getElementById('white-captured'),
+                blackCaptured: document.getElementById('black-captured'),
+                whitePlayerName: document.getElementById('white-player-name'),
+                blackPlayerName: document.getElementById('black-player-name'),
+                moveLog: document.getElementById('move-log'),
+                statusLog: document.getElementById('status-log'),
+                spTitle: document.getElementById('sp-title'),
+                spBadge: document.getElementById('sp-badge'),
+                spMiniLayout: document.getElementById('sp-mini-layout'),
+                evalBarBlack: document.getElementById('eval-bar-black'),
+                evalScoreLabel: document.getElementById('eval-score-label'),
+                analysisNavBar: document.getElementById('analysis-nav-bar'),
+                analysisMoveEval: document.getElementById('analysis-move-eval'),
+                p2pStatus: document.getElementById('p2p-status'),
+                userProfile: document.getElementById('user-profile'),
+                runAllBtn: document.getElementById('run-all-tests-btn'),
+                runFuzzBtn: document.getElementById('run-fuzz-btn'),
+                testProgressBar: document.getElementById('test-progress-bar'),
+                testStatusSummary: document.getElementById('test-status-summary'),
+                testResultsList: document.getElementById('test-results-list'),
+                gameOverModal: document.getElementById('game-over-modal'),
+                gameOverIcon: document.getElementById('game-over-icon'),
+                gameOverTitle: document.getElementById('game-over-title'),
+                gameOverDesc: document.getElementById('game-over-desc'),
+                statMoves: document.getElementById('stat-moves'),
+                statSP: document.getElementById('stat-sp'),
+                statTime: document.getElementById('stat-time')
+            };
+
+            const gameController = new GameController(elements);
+            const testRunnerUI = new TestRunnerUI(elements);
+            testRunnerUI.bindEvents();
+
+            const spModal = document.getElementById('sp-modal');
+            const spExplorer = new SPExplorerUI(spModal, (newSP) => {
+                gameController.startNewGame(newSP);
+            });
+
+            // UI Button Bindings
+            document.getElementById('open-sp-btn').onclick = () => spExplorer.show();
+            document.getElementById('flip-board-btn').onclick = () => {
+                gameController.boardUI.flipBoard();
+                gameController.updateUI();
+            };
+            document.getElementById('new-game-btn').onclick = () => gameController.startNewGame();
+            
+            // Random 960 Roll Button
+            document.getElementById('roll-random-960-btn').onclick = () => {
+                const randSP = Math.floor(Math.random() * 960);
+                gameController.startNewGame(randSP);
+            };
+
+            // Quick Curated Position Dropdown
+            const quickSelect = document.getElementById('quick-curated-select');
+            quickSelect.onchange = () => {
+                const sp = parseInt(quickSelect.value, 10);
+                gameController.startNewGame(sp);
+            };
+
+            // Board Theme Selector
+            const themeSelect = document.getElementById('theme-select');
+            themeSelect.onchange = () => {
+                gameController.boardUI.setTheme(themeSelect.value);
+                gameController.updateUI();
+            };
+
+            // Time Controls Modal Handling
+            const timeModal = document.getElementById('time-modal');
+            const openTimeBtn = document.getElementById('open-time-modal-btn');
+            const closeTimeBtn = document.getElementById('close-time-modal-btn');
+            const currentTimeDisplay = document.getElementById('current-time-display');
+
+            openTimeBtn.onclick = () => timeModal.classList.add('visible');
+            closeTimeBtn.onclick = () => timeModal.classList.remove('visible');
+
+            document.querySelectorAll('.time-preset-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.time-preset-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const presetId = btn.dataset.preset;
+                    gameController.setTimePreset(presetId);
+                    
+                    const preset = STANDARD_TIME_PRESETS.find(p => p.id === presetId);
+                    if (preset) {
+                        currentTimeDisplay.textContent = `${preset.name} | ${preset.cat} (+${preset.incSec}s inc)`;
+                    }
+                    timeModal.classList.remove('visible');
+                };
+            });
+
+            document.getElementById('apply-custom-time-btn').onclick = () => {
+                const min = parseInt(document.getElementById('custom-min-input').value, 10) || 5;
+                const inc = parseInt(document.getElementById('custom-inc-input').value, 10) || 0;
+                gameController.setCustomTime(min, inc);
+                currentTimeDisplay.textContent = `Custom: ${min} min (+${inc}s inc)`;
+                timeModal.classList.remove('visible');
+            };
+
+            // Bot Difficulty Selector
+            const botDiffSelect = document.getElementById('bot-difficulty-select');
+            botDiffSelect.onchange = () => {
+                gameController.botEngine.setDifficulty(botDiffSelect.value);
+                gameController.updateStatusLog(`Bot difficulty set to ${botDiffSelect.value.toUpperCase()}`);
+            };
+
+            // PGN Copy Button
+            document.getElementById('btn-copy-pgn').onclick = () => {
+                const pgn = gameController.engine.generatePGN();
+                navigator.clipboard.writeText(pgn);
+                gameController.updateStatusLog('PGN match notation copied to clipboard!');
+            };
+
+            // Analysis Navigation Buttons
+            document.getElementById('nav-first-btn').onclick = () => gameController.navigateHistory(0);
+            document.getElementById('nav-prev-btn').onclick = () => gameController.navigateHistoryDelta(-1);
+            document.getElementById('nav-next-btn').onclick = () => gameController.navigateHistoryDelta(1);
+            document.getElementById('nav-last-btn').onclick = () => gameController.navigateHistory(-1);
+            document.getElementById('exit-analysis-btn').onclick = () => gameController.exitAnalysisMode();
+
+            // Game Over Modal Action Buttons
+            document.getElementById('btn-start-analysis').onclick = () => {
+                elements.gameOverModal.classList.remove('visible');
+                gameController.enterAnalysisMode();
+            };
+            document.getElementById('btn-rematch').onclick = () => {
+                elements.gameOverModal.classList.remove('visible');
+                const randSP = Math.floor(Math.random() * 960);
+                gameController.startNewGame(randSP);
+            };
+            document.getElementById('btn-close-game-over').onclick = () => {
+                elements.gameOverModal.classList.remove('visible');
+            };
+
+            // Mode Selector
+            const modeSelect = document.getElementById('mode-select');
+            const p2pBox = document.getElementById('p2p-status-box');
+            const onlineBox = document.getElementById('online-profile-box');
+            const botLevelContainer = document.getElementById('bot-level-container');
+
+            modeSelect.onchange = async () => {
+                const mode = modeSelect.value;
+                gameController.gameMode = mode;
+                p2pBox.style.display = mode === 'p2p' ? 'block' : 'none';
+                onlineBox.style.display = mode === 'online' ? 'block' : 'none';
+                botLevelContainer.style.display = mode === 'bot' ? 'flex' : 'none';
+
+                if (mode === 'p2p') {
+                    await gameController.p2pSimulator.connect();
+                } else if (mode === 'online') {
+                    await gameController.onlineSimulator.signInWithGoogle();
+                    await gameController.onlineSimulator.createRoom(gameController.spIndex);
+                    setTimeout(() => gameController.onlineSimulator.simulatedOpponentJoin(), 1500);
+                }
+            };
+
+            // Header Tab Navigation
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(tab => {
+                tab.onclick = () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                };
+            });
+
+            // Start initial game with dynamic Chess 960 position (SP-497: BRQBNKNR)
+            gameController.startNewGame(497);
+        });
+    </script>
+</body>
+</html>
